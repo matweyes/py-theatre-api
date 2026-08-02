@@ -198,7 +198,10 @@ cp .env.sample .env
 docker-compose up --build
 
 # 4. Create a superuser (in a separate terminal)
-docker exec -it theatre python manage.py createsuperuser
+docker-compose exec -it theatre python manage.py createsuperuser
+
+# 5. (Optional) Seed the database with demo data
+docker-compose exec -it theatre python manage.py seed
 ```
 
 The API will be available at `http://127.0.0.1:8000/`.
@@ -346,6 +349,24 @@ poetry run python manage.py runserver
 | Seats | Read | Read | Read |
 | Reservations | -- | Own only (create, list, detail, delete) | All (list, detail, delete) |
 | Tickets | -- | Own only (list, detail) | All (list, detail) |
+
+## Demo Data
+
+Populate the database with sample genres, actors, plays, theatre halls,
+performances, and a demo reservation:
+
+```bash
+# Via Docker
+docker exec -it theatre python manage.py seed
+
+# Locally
+poetry run python manage.py seed
+
+# Re-seed from scratch (deletes existing theatre data first)
+poetry run python manage.py seed --flush
+```
+
+A demo user is created automatically: `demo@theatre.com` / `demo12345`.
 
 ## Testing
 
