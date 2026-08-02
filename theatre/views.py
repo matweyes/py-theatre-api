@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from theatre.models import Genre, Actor, Play, TheatreHall
+from theatre.models import Genre, Actor, Play, TheatreHall, Performance
 from theatre.permissions import IsAdminOrReadOnly
 from theatre.serializers import (
     GenreSerializer,
@@ -11,6 +14,9 @@ from theatre.serializers import (
     PlayListSerializer,
     PlayDetailSerializer,
     TheatreHallSerializer,
+    PerformanceSerializer,
+    PerformanceListSerializer,
+    PerformanceDetailSerializer,
 )
 
 
@@ -87,3 +93,63 @@ class TheatreHallViewSet(viewsets.ModelViewSet):
     queryset = TheatreHall.objects.all()
     serializer_class = TheatreHallSerializer
     permission_classes = (IsAdminOrReadOnly,)
+
+
+class PerformancePagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
+
+
+class PerformanceViewSet(viewsets.ModelViewSet):
+    queryset = Performance.objects.select_related("play", "theatre_hall")
+    serializer_class = PerformanceSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    pagination_class = PerformancePagination
+
+    def get_queryset(self):
+        play = self.request.query_params.get("play")
+        date = self.request.query_params.get("date")
+        hall = self.request.query_params.get("hall")
+
+        queryset = self.queryset
+
+        if play:
+            queryset = queryset.filter(play__title__icontains=play)
+
+        if date:
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
+
+        if hall:
+            queryset = queryset.filter(theatre_hall__name__icontains=hall)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PerformanceListSerializer
+        if self.action == "retrieve":
+            return PerformanceDetailSerializer
+        return PerformanceSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "play",
+                type=OpenApiTypes.STR,
+                description="Filter by play title (ex. ?play=hamlet)",
+            ),
+            OpenApiParameter(
+                "date",
+                type=OpenApiTypes.DATE,
+                description="Filter by date (ex. ?date=2026-08-15)",
+            ),
+            OpenApiParameter(
+                "hall",
+                type=OpenApiTypes.STR,
+                description="Filter by theatre hall name (ex. ?hall=grand)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

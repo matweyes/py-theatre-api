@@ -6,6 +6,7 @@ from theatre.views import (
     ActorViewSet,
     PlayViewSet,
     TheatreHallViewSet,
+    PerformanceViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -13,6 +14,7 @@ router.register("genres", GenreViewSet)
 router.register("actors", ActorViewSet)
 router.register("plays", PlayViewSet)
 router.register("theatre-halls", TheatreHallViewSet)
+router.register("performances", PerformanceViewSet)
 
 urlpatterns = [path("", include(router.urls))]
 

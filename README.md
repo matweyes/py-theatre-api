@@ -6,7 +6,7 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 
 ## Current Status
 
-**Phase 1 — Project Foundation** is complete:
+**Phase 1 — Project Foundation**:
 
 - Django project scaffold (`theatre_service`)
 - Custom email-based User model (no username)
@@ -16,6 +16,21 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 - Docker + Docker Compose setup
 - `wait_for_db` management command
 - Flake8 linting with plugins
+
+**Phase 2 — Theatre Content Management**:
+
+- Genre, Actor, Play, TheatreHall models with full CRUD
+- Serializer hierarchy (base/list/detail) with action-based switching
+- `IsAdminOrReadOnly` permission (anonymous read, admin write)
+- Play filtering by title, genre name, actor name
+- Admin registration for all models
+
+**Phase 3 — Performance Management**:
+
+- Performance model (play + theatre hall + show time)
+- Serializer hierarchy (base/list/detail) for performances
+- Filtering by play title, date, theatre hall name
+- Pagination (10 per page, max 100)
 
 ## Tech Stack
 
@@ -37,12 +52,26 @@ py-theatre-api/
 │   ├── urls.py
 │   ├── wsgi.py
 │   └── asgi.py
+├── theatre/                   # Core domain app
+│   ├── models.py              # Genre, Actor, Play, TheatreHall, Performance
+│   ├── serializers.py         # Base / List / Detail serializers
+│   ├── views.py               # ViewSets with filtering & pagination
+│   ├── urls.py                # DRF router
+│   ├── permissions.py         # IsAdminOrReadOnly
+│   ├── admin.py
+│   └── tests/                 # Tests per resource
+│       ├── test_genre_api.py
+│       ├── test_actor_api.py
+│       ├── test_play_api.py
+│       ├── test_theatre_hall_api.py
+│       └── test_performance_api.py
 ├── user/                      # Custom user app
 │   ├── models.py              # User + UserManager (email-based)
 │   ├── serializers.py         # UserSerializer
 │   ├── views.py               # Register + profile views
 │   ├── urls.py                # Auth endpoints
 │   ├── admin.py               # Custom UserAdmin
+│   ├── tests.py
 │   └── management/
 │       └── commands/
 │           └── wait_for_db.py
@@ -127,6 +156,60 @@ poetry run python manage.py runserver
 | GET | `/api/users/me/` | View / update current user profile |
 | PUT | `/api/users/me/` | Update current user profile |
 
+### Genres
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/genres/` | List all genres |
+| GET | `/api/genres/{id}/` | Genre detail |
+| POST | `/api/genres/` | Create genre (admin) |
+| PUT | `/api/genres/{id}/` | Update genre (admin) |
+| DELETE | `/api/genres/{id}/` | Delete genre (admin) |
+
+### Actors
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/actors/` | List all actors |
+| GET | `/api/actors/{id}/` | Actor detail |
+| POST | `/api/actors/` | Create actor (admin) |
+| PUT | `/api/actors/{id}/` | Update actor (admin) |
+| DELETE | `/api/actors/{id}/` | Delete actor (admin) |
+
+### Plays
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/plays/` | List plays (filterable) |
+| GET | `/api/plays/{id}/` | Play detail with genres & actors |
+| POST | `/api/plays/` | Create play (admin) |
+| PUT | `/api/plays/{id}/` | Update play (admin) |
+| DELETE | `/api/plays/{id}/` | Delete play (admin) |
+
+**Filters:** `?title=hamlet`, `?genre=drama`, `?actor=smith`
+
+### Theatre Halls
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/theatre-halls/` | List all halls |
+| GET | `/api/theatre-halls/{id}/` | Hall detail with capacity |
+| POST | `/api/theatre-halls/` | Create hall (admin) |
+| PUT | `/api/theatre-halls/{id}/` | Update hall (admin) |
+| DELETE | `/api/theatre-halls/{id}/` | Delete hall (admin) |
+
+### Performances
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/performances/` | List performances (paginated, filterable) |
+| GET | `/api/performances/{id}/` | Performance detail |
+| POST | `/api/performances/` | Create performance (admin) |
+| PUT | `/api/performances/{id}/` | Update performance (admin) |
+| DELETE | `/api/performances/{id}/` | Delete performance (admin) |
+
+**Filters:** `?play=hamlet`, `?date=2026-09-15`, `?hall=grand`
+
 ### Documentation
 
 | Method | Endpoint | Description |
@@ -140,6 +223,16 @@ poetry run python manage.py runserver
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/admin/` | Django admin panel |
+
+## Permissions
+
+| Resource | Anonymous | Authenticated | Admin |
+|---|---|---|---|
+| Genres | Read | Read | Full CRUD |
+| Actors | Read | Read | Full CRUD |
+| Plays | Read | Read | Full CRUD |
+| Theatre Halls | Read | Read | Full CRUD |
+| Performances | Read | Read | Full CRUD |
 
 ## Testing
 
