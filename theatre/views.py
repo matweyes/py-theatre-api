@@ -104,7 +104,7 @@ class TheatreHallViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
 
 
-class PerformancePagination(PageNumberPagination):
+class StandardPagination(PageNumberPagination):
     page_size = 10
     max_page_size = 100
 
@@ -113,7 +113,7 @@ class PerformanceViewSet(viewsets.ModelViewSet):
     queryset = Performance.objects.select_related("play", "theatre_hall")
     serializer_class = PerformanceSerializer
     permission_classes = (IsAdminOrReadOnly,)
-    pagination_class = PerformancePagination
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         play = self.request.query_params.get("play")
@@ -192,11 +192,6 @@ class PerformanceViewSet(viewsets.ModelViewSet):
         )
 
 
-class ReservationPagination(PageNumberPagination):
-    page_size = 10
-    max_page_size = 100
-
-
 class ReservationViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -207,7 +202,7 @@ class ReservationViewSet(
     queryset = Reservation.objects.prefetch_related("tickets__performance__play")
     serializer_class = ReservationSerializer
     permission_classes = (IsAuthenticated, IsAdminOrOwner)
-    pagination_class = ReservationPagination
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         queryset = self.queryset
@@ -236,7 +231,7 @@ class TicketViewSet(
     )
     serializer_class = TicketListSerializer
     permission_classes = (IsAuthenticated,)
-    pagination_class = ReservationPagination
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         queryset = self.queryset

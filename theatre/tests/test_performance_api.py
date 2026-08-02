@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -31,7 +33,7 @@ def sample_performance(**params):
     defaults = {
         "play": params.pop("play", None) or sample_play(),
         "theatre_hall": params.pop("theatre_hall", None) or sample_hall(),
-        "show_time": "2026-09-15 19:00:00",
+        "show_time": datetime(2026, 9, 15, 19, 0, tzinfo=timezone.utc),
     }
     defaults.update(params)
     return Performance.objects.create(**defaults)
@@ -46,7 +48,7 @@ class AnonymousPerformanceApiTests(TestCase):
         sample_performance(
             play=sample_play(title="Other"),
             theatre_hall=sample_hall(name="Small"),
-            show_time="2026-09-16 20:00:00",
+            show_time=datetime(2026, 9, 16, 20, 0, tzinfo=timezone.utc),
         )
 
         res = self.client.get(PERFORMANCE_URL)
@@ -59,7 +61,8 @@ class AnonymousPerformanceApiTests(TestCase):
         hall = sample_hall()
         for i in range(15):
             Performance.objects.create(
-                play=play, theatre_hall=hall, show_time=f"2026-10-{i + 1:02d} 19:00:00"
+                play=play, theatre_hall=hall,
+                show_time=datetime(2026, 10, i + 1, 19, 0, tzinfo=timezone.utc),
             )
 
         res = self.client.get(PERFORMANCE_URL)
@@ -86,7 +89,7 @@ class AnonymousPerformanceApiTests(TestCase):
         payload = {
             "play": play.id,
             "theatre_hall": hall.id,
-            "show_time": "2026-09-20 19:00:00",
+            "show_time": "2026-09-20T19:00:00Z",
         }
 
         res = self.client.post(PERFORMANCE_URL, payload)
@@ -112,8 +115,8 @@ class AuthenticatedPerformanceApiTests(TestCase):
         play2 = sample_play(title="Othello")
         hall = sample_hall()
 
-        Performance.objects.create(play=play1, theatre_hall=hall, show_time="2026-09-15 19:00:00")
-        Performance.objects.create(play=play2, theatre_hall=hall, show_time="2026-09-16 19:00:00")
+        Performance.objects.create(play=play1, theatre_hall=hall, show_time=datetime(2026, 9, 15, 19, 0, tzinfo=timezone.utc))
+        Performance.objects.create(play=play2, theatre_hall=hall, show_time=datetime(2026, 9, 16, 19, 0, tzinfo=timezone.utc))
 
         res = self.client.get(PERFORMANCE_URL, {"play": "hamlet"})
 
@@ -124,8 +127,8 @@ class AuthenticatedPerformanceApiTests(TestCase):
         play = sample_play()
         hall = sample_hall()
 
-        Performance.objects.create(play=play, theatre_hall=hall, show_time="2026-09-15 19:00:00")
-        Performance.objects.create(play=play, theatre_hall=hall, show_time="2026-09-16 20:00:00")
+        Performance.objects.create(play=play, theatre_hall=hall, show_time=datetime(2026, 9, 15, 19, 0, tzinfo=timezone.utc))
+        Performance.objects.create(play=play, theatre_hall=hall, show_time=datetime(2026, 9, 16, 20, 0, tzinfo=timezone.utc))
 
         res = self.client.get(PERFORMANCE_URL, {"date": "2026-09-15"})
 
@@ -136,8 +139,8 @@ class AuthenticatedPerformanceApiTests(TestCase):
         hall1 = sample_hall(name="Grand Hall")
         hall2 = sample_hall(name="Studio")
 
-        Performance.objects.create(play=play, theatre_hall=hall1, show_time="2026-09-15 19:00:00")
-        Performance.objects.create(play=play, theatre_hall=hall2, show_time="2026-09-15 20:00:00")
+        Performance.objects.create(play=play, theatre_hall=hall1, show_time=datetime(2026, 9, 15, 19, 0, tzinfo=timezone.utc))
+        Performance.objects.create(play=play, theatre_hall=hall2, show_time=datetime(2026, 9, 15, 20, 0, tzinfo=timezone.utc))
 
         res = self.client.get(PERFORMANCE_URL, {"hall": "grand"})
 
@@ -150,7 +153,7 @@ class AuthenticatedPerformanceApiTests(TestCase):
         payload = {
             "play": play.id,
             "theatre_hall": hall.id,
-            "show_time": "2026-09-20 19:00:00",
+            "show_time": "2026-09-20T19:00:00Z",
         }
 
         res = self.client.post(PERFORMANCE_URL, payload)
@@ -172,7 +175,7 @@ class AdminPerformanceApiTests(TestCase):
         payload = {
             "play": play.id,
             "theatre_hall": hall.id,
-            "show_time": "2026-09-20 19:00:00",
+            "show_time": "2026-09-20T19:00:00Z",
         }
 
         res = self.client.post(PERFORMANCE_URL, payload)

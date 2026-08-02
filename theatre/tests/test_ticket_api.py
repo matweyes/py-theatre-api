@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -18,7 +20,7 @@ def sample_performance(**params):
     defaults = {
         "play": Play.objects.create(title="Test Play", description="Test"),
         "theatre_hall": TheatreHall.objects.create(name="Hall", rows=10, seats_in_row=20),
-        "show_time": "2026-09-15 19:00:00",
+        "show_time": datetime(2026, 9, 15, 19, 0, tzinfo=timezone.utc),
     }
     defaults.update(params)
     return Performance.objects.create(**defaults)

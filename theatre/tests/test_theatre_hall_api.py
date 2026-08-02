@@ -109,6 +109,16 @@ class AdminTheatreHallApiTests(TestCase):
         self.assertEqual(hall.rows, 25)
         self.assertEqual(hall.seats_in_row, 35)
 
+    def test_create_hall_invalid_rows(self):
+        res = self.client.post(THEATRE_HALL_URL, {"name": "Bad", "rows": 0, "seats_in_row": 10})
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_hall_invalid_seats_in_row(self):
+        res = self.client.post(THEATRE_HALL_URL, {"name": "Bad", "rows": 10, "seats_in_row": -1})
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_hall(self):
         hall = TheatreHall.objects.create(name="Main", rows=20, seats_in_row=30)
 

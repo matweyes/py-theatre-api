@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -43,8 +44,8 @@ class Play(models.Model):
 
 class TheatreHall(models.Model):
     name = models.CharField(max_length=255)
-    rows = models.IntegerField()
-    seats_in_row = models.IntegerField()
+    rows = models.IntegerField(validators=[MinValueValidator(1)])
+    seats_in_row = models.IntegerField(validators=[MinValueValidator(1)])
 
     @property
     def capacity(self) -> int:

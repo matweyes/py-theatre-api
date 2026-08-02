@@ -48,6 +48,14 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 - Users see only their own tickets; admins see all
 - Enriched seat availability response (rows, seats_in_row, taken seats, available seats)
 
+**Phase 6 — Finalization**:
+
+- TheatreHall validation (rows and seats_in_row must be >= 1)
+- `ALLOWED_HOSTS` configurable via `DJANGO_ALLOWED_HOSTS` env var
+- Timezone-aware datetimes (`USE_TZ = True`)
+- Debug toolbar conditional on `DEBUG` (disabled in production)
+- 105 tests across all resources with zero warnings
+
 ## Tech Stack
 
 - Python 3.12
@@ -160,6 +168,7 @@ poetry run python manage.py runserver
 | `POSTGRES_PORT` | Database port | `5432` |
 | `DJANGO_SECRET_KEY` | Django secret key | insecure dev key |
 | `DJANGO_DEBUG` | Debug mode (`False` to disable) | `True` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts | `localhost,127.0.0.1` |
 
 ## API Endpoints
 
