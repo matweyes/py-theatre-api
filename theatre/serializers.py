@@ -97,6 +97,14 @@ class TicketListSerializer(TicketSerializer):
         fields = ("id", "row", "seat", "performance")
 
 
+class TicketDetailSerializer(TicketSerializer):
+    performance = PerformanceListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "performance", "reservation")
+
+
 class TicketSeatsSerializer(serializers.ModelSerializer):
     """Minimal serializer for taken seats."""
 

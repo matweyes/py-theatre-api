@@ -21,6 +21,8 @@ from theatre.serializers import (
     PerformanceListSerializer,
     PerformanceDetailSerializer,
     TicketSeatsSerializer,
+    TicketListSerializer,
+    TicketDetailSerializer,
     ReservationSerializer,
     ReservationListSerializer,
     ReservationDetailSerializer,
@@ -165,11 +167,29 @@ class PerformanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="seats")
     def seats(self, request, pk=None):
-        """Return taken seats for this performance."""
+        """Return seat map for this performance."""
         performance = self.get_object()
-        taken = Ticket.objects.filter(performance=performance)
-        serializer = TicketSeatsSerializer(taken, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        hall = performance.theatre_hall
+        taken_tickets = Ticket.objects.filter(performance=performance)
+        taken = TicketSeatsSerializer(taken_tickets, many=True).data
+        taken_set = {(t["row"], t["seat"]) for t in taken}
+
+        available = [
+            {"row": r, "seat": s}
+            for r in range(1, hall.rows + 1)
+            for s in range(1, hall.seats_in_row + 1)
+            if (r, s) not in taken_set
+        ]
+
+        return Response(
+            {
+                "rows": hall.rows,
+                "seats_in_row": hall.seats_in_row,
+                "taken": taken,
+                "available": available,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ReservationPagination(PageNumberPagination):
@@ -204,3 +224,27 @@ class ReservationViewSet(
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class TicketViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = Ticket.objects.select_related(
+        "performance__play", "performance__theatre_hall", "reservation"
+    )
+    serializer_class = TicketListSerializer
+    permission_classes = (IsAuthenticated,)
+    pagination_class = ReservationPagination
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(reservation__user=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return TicketDetailSerializer
+        return TicketListSerializer

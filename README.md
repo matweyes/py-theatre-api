@@ -42,6 +42,12 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 - Users see only their own reservations; admins see all
 - `IsAdminOrOwner` permission class
 
+**Phase 5 — Customer Features**:
+
+- Standalone ticket endpoints (`GET /api/tickets/`, `GET /api/tickets/{id}/`)
+- Users see only their own tickets; admins see all
+- Enriched seat availability response (rows, seats_in_row, taken seats, available seats)
+
 ## Tech Stack
 
 - Python 3.12
@@ -75,7 +81,8 @@ py-theatre-api/
 │       ├── test_play_api.py
 │       ├── test_theatre_hall_api.py
 │       ├── test_performance_api.py
-│       └── test_reservation_api.py
+│       ├── test_reservation_api.py
+│       └── test_ticket_api.py
 ├── user/                      # Custom user app
 │   ├── models.py              # User + UserManager (email-based)
 │   ├── serializers.py         # UserSerializer
@@ -215,7 +222,7 @@ poetry run python manage.py runserver
 |---|---|---|
 | GET | `/api/performances/` | List performances (paginated, filterable) |
 | GET | `/api/performances/{id}/` | Performance detail |
-| GET | `/api/performances/{id}/seats/` | Taken seats for a performance |
+| GET | `/api/performances/{id}/seats/` | Seat map (taken + available) |
 | POST | `/api/performances/` | Create performance (admin) |
 | PUT | `/api/performances/{id}/` | Update performance (admin) |
 | DELETE | `/api/performances/{id}/` | Delete performance (admin) |
@@ -230,6 +237,13 @@ poetry run python manage.py runserver
 | GET | `/api/reservations/{id}/` | Reservation detail with tickets |
 | POST | `/api/reservations/` | Create reservation with tickets |
 | DELETE | `/api/reservations/{id}/` | Cancel (delete) reservation |
+
+### Tickets
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/tickets/` | List own tickets (paginated) |
+| GET | `/api/tickets/{id}/` | Ticket detail |
 
 ### Documentation
 
@@ -256,6 +270,7 @@ poetry run python manage.py runserver
 | Performances | Read | Read | Full CRUD |
 | Seats | Read | Read | Read |
 | Reservations | -- | Own only (create, list, detail, delete) | All (list, detail, delete) |
+| Tickets | -- | Own only (list, detail) | All (list, detail) |
 
 ## Testing
 

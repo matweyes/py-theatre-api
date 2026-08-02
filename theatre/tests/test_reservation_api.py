@@ -56,7 +56,10 @@ class AnonymousSeatsApiTests(TestCase):
         res = self.client.get(seats_url(perf.id))
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, [])
+        self.assertEqual(res.data["rows"], 10)
+        self.assertEqual(res.data["seats_in_row"], 20)
+        self.assertEqual(res.data["taken"], [])
+        self.assertEqual(len(res.data["available"]), 10 * 20)
 
 
 class AuthenticatedReservationApiTests(TestCase):
@@ -160,7 +163,7 @@ class AuthenticatedReservationApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def test_seats_shows_taken_seats(self):
+    def test_seats_shows_taken_and_available(self):
         reservation = Reservation.objects.create(user=self.user)
         Ticket.objects.create(row=1, seat=1, performance=self.performance, reservation=reservation)
         Ticket.objects.create(row=2, seat=5, performance=self.performance, reservation=reservation)
@@ -168,10 +171,16 @@ class AuthenticatedReservationApiTests(TestCase):
         res = self.client.get(seats_url(self.performance.id))
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
-        seats = [(s["row"], s["seat"]) for s in res.data]
-        self.assertIn((1, 1), seats)
-        self.assertIn((2, 5), seats)
+        self.assertEqual(res.data["rows"], 10)
+        self.assertEqual(res.data["seats_in_row"], 20)
+        self.assertEqual(len(res.data["taken"]), 2)
+        taken = [(s["row"], s["seat"]) for s in res.data["taken"]]
+        self.assertIn((1, 1), taken)
+        self.assertIn((2, 5), taken)
+        self.assertEqual(len(res.data["available"]), 10 * 20 - 2)
+        available = [(s["row"], s["seat"]) for s in res.data["available"]]
+        self.assertNotIn((1, 1), available)
+        self.assertNotIn((2, 5), available)
 
 
 class AdminReservationApiTests(TestCase):
