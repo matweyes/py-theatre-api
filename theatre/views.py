@@ -2,11 +2,14 @@ from datetime import datetime
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from theatre.models import Genre, Actor, Play, TheatreHall, Performance
-from theatre.permissions import IsAdminOrReadOnly
+from theatre.models import Genre, Actor, Play, TheatreHall, Performance, Reservation, Ticket
+from theatre.permissions import IsAdminOrReadOnly, IsAdminOrOwner
 from theatre.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -17,6 +20,10 @@ from theatre.serializers import (
     PerformanceSerializer,
     PerformanceListSerializer,
     PerformanceDetailSerializer,
+    TicketSeatsSerializer,
+    ReservationSerializer,
+    ReservationListSerializer,
+    ReservationDetailSerializer,
 )
 
 
@@ -130,6 +137,8 @@ class PerformanceViewSet(viewsets.ModelViewSet):
             return PerformanceListSerializer
         if self.action == "retrieve":
             return PerformanceDetailSerializer
+        if self.action == "seats":
+            return TicketSeatsSerializer
         return PerformanceSerializer
 
     @extend_schema(
@@ -153,3 +162,45 @@ class PerformanceViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @action(detail=True, methods=["get"], url_path="seats")
+    def seats(self, request, pk=None):
+        """Return taken seats for this performance."""
+        performance = self.get_object()
+        taken = Ticket.objects.filter(performance=performance)
+        serializer = TicketSeatsSerializer(taken, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ReservationPagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
+
+
+class ReservationViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = Reservation.objects.prefetch_related("tickets__performance__play")
+    serializer_class = ReservationSerializer
+    permission_classes = (IsAuthenticated, IsAdminOrOwner)
+    pagination_class = ReservationPagination
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(user=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ReservationListSerializer
+        if self.action == "retrieve":
+            return ReservationDetailSerializer
+        return ReservationSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

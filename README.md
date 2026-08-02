@@ -32,6 +32,16 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 - Filtering by play title, date, theatre hall name
 - Pagination (10 per page, max 100)
 
+**Phase 4 — Seat Booking**:
+
+- Reservation and Ticket models with seat validation
+- Writable nested serializer (create reservation with tickets in one request)
+- Atomic transactions for reservation creation
+- Unique constraint on (performance, row, seat) — no double-booking
+- Seat availability endpoint (`GET /api/performances/{id}/seats/`)
+- Users see only their own reservations; admins see all
+- `IsAdminOrOwner` permission class
+
 ## Tech Stack
 
 - Python 3.12
@@ -53,18 +63,19 @@ py-theatre-api/
 │   ├── wsgi.py
 │   └── asgi.py
 ├── theatre/                   # Core domain app
-│   ├── models.py              # Genre, Actor, Play, TheatreHall, Performance
+│   ├── models.py              # Genre, Actor, Play, TheatreHall, Performance, Reservation, Ticket
 │   ├── serializers.py         # Base / List / Detail serializers
-│   ├── views.py               # ViewSets with filtering & pagination
+│   ├── views.py               # ViewSets with filtering, pagination & seat availability
 │   ├── urls.py                # DRF router
-│   ├── permissions.py         # IsAdminOrReadOnly
+│   ├── permissions.py         # IsAdminOrReadOnly, IsAdminOrOwner
 │   ├── admin.py
 │   └── tests/                 # Tests per resource
 │       ├── test_genre_api.py
 │       ├── test_actor_api.py
 │       ├── test_play_api.py
 │       ├── test_theatre_hall_api.py
-│       └── test_performance_api.py
+│       ├── test_performance_api.py
+│       └── test_reservation_api.py
 ├── user/                      # Custom user app
 │   ├── models.py              # User + UserManager (email-based)
 │   ├── serializers.py         # UserSerializer
@@ -204,11 +215,21 @@ poetry run python manage.py runserver
 |---|---|---|
 | GET | `/api/performances/` | List performances (paginated, filterable) |
 | GET | `/api/performances/{id}/` | Performance detail |
+| GET | `/api/performances/{id}/seats/` | Taken seats for a performance |
 | POST | `/api/performances/` | Create performance (admin) |
 | PUT | `/api/performances/{id}/` | Update performance (admin) |
 | DELETE | `/api/performances/{id}/` | Delete performance (admin) |
 
 **Filters:** `?play=hamlet`, `?date=2026-09-15`, `?hall=grand`
+
+### Reservations
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/reservations/` | List own reservations (paginated) |
+| GET | `/api/reservations/{id}/` | Reservation detail with tickets |
+| POST | `/api/reservations/` | Create reservation with tickets |
+| DELETE | `/api/reservations/{id}/` | Cancel (delete) reservation |
 
 ### Documentation
 
@@ -233,6 +254,8 @@ poetry run python manage.py runserver
 | Plays | Read | Read | Full CRUD |
 | Theatre Halls | Read | Read | Full CRUD |
 | Performances | Read | Read | Full CRUD |
+| Seats | Read | Read | Read |
+| Reservations | -- | Own only (create, list, detail, delete) | All (list, detail, delete) |
 
 ## Testing
 

@@ -11,3 +11,13 @@ class IsAdminOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return request.user and request.user.is_staff
+
+
+class IsAdminOrOwner(BasePermission):
+    """
+    Admin can see everything.
+    Authenticated users can only see/manage their own objects.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff or obj.user == request.user
