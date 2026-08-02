@@ -56,6 +56,72 @@ Built with Django REST Framework, JWT authentication, PostgreSQL, and Docker.
 - Debug toolbar conditional on `DEBUG` (disabled in production)
 - 105 tests across all resources with zero warnings
 
+## Database Schema
+
+```mermaid
+erDiagram
+    User {
+        bigint id PK
+        varchar email UK
+        varchar password
+        boolean is_staff
+        boolean is_superuser
+    }
+
+    Genre {
+        bigint id PK
+        varchar name UK
+    }
+
+    Actor {
+        bigint id PK
+        varchar first_name
+        varchar last_name
+    }
+
+    Play {
+        bigint id PK
+        varchar title
+        text description
+    }
+
+    TheatreHall {
+        bigint id PK
+        varchar name
+        int rows
+        int seats_in_row
+    }
+
+    Performance {
+        bigint id PK
+        bigint play_id FK
+        bigint theatre_hall_id FK
+        datetime show_time
+    }
+
+    Reservation {
+        bigint id PK
+        bigint user_id FK
+        datetime created_at
+    }
+
+    Ticket {
+        bigint id PK
+        int row
+        int seat
+        bigint performance_id FK
+        bigint reservation_id FK
+    }
+
+    Play }o--o{ Genre : genres
+    Play }o--o{ Actor : actors
+    Performance }o--|| Play : play
+    Performance }o--|| TheatreHall : theatre_hall
+    Reservation }o--|| User : user
+    Ticket }o--|| Performance : performance
+    Ticket }o--|| Reservation : reservation
+```
+
 ## Tech Stack
 
 - Python 3.12
